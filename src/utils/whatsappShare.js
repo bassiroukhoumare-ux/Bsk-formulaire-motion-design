@@ -166,8 +166,9 @@ export const buildWhatsAppMessage = (formData, usdRate = 1.08) => {
   lines.push('👤 *CLIENT*');
   lines.push(`Nom : ${formData.nom_complet}`);
   if (formData.entreprise) lines.push(`Entreprise : ${formData.entreprise}`);
-  lines.push(`Tél : ${formData.indicatif} ${formData.telephone_number}`);
-  if (formData.identifiant_whatsapp) lines.push(`Identifiant WhatsApp : ${formData.identifiant_whatsapp}`);
+  if (formData.email) lines.push(`Email : ${formData.email}`);
+  const indicatif = formData.indicatif === 'autre' ? (formData.indicatif_custom || '') : formData.indicatif;
+  lines.push(`WhatsApp : ${indicatif} ${formData.telephone_number}`);
   lines.push(`Pays : ${formData.pays}`);
   lines.push('');
 

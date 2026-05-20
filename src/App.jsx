@@ -13,10 +13,11 @@ import { generatePDF } from './utils/pdfGenerator';
 
 const INITIAL_STATE = {
   nom_complet: '',
+  email: '',
   entreprise: '',
   indicatif: '+221',
+  indicatif_custom: '',
   telephone_number: '',
-  identifiant_whatsapp: '',
   pays: '',
   type_projet: '',
   autre_precision: '',
@@ -60,7 +61,8 @@ const COUNTRY_CODES = [
   { code: '+212', label: '🇲🇦 Maroc (+212)' },
   { code: '+1', label: '🇨🇦 Canada / 🇺🇸 USA (+1)' },
   { code: '+32', label: '🇧🇪 Belgique (+32)' },
-  { code: '+41', label: '🇨🇭 Suisse (+41)' }
+  { code: '+41', label: '🇨🇭 Suisse (+41)' },
+  { code: 'autre', label: '🌍 Autre indicatif...' }
 ];
 
 const BUDGET_BRACKETS = [
@@ -166,8 +168,10 @@ function App() {
       case 0:
         return (
           formData.nom_complet.trim().length > 0 &&
+          emailValid &&
           formData.telephone_number.trim().length >= 7 &&
-          formData.pays.trim().length > 0
+          formData.pays.trim().length > 0 &&
+          (formData.indicatif !== 'autre' || (formData.indicatif_custom && formData.indicatif_custom.trim().length > 0))
         );
       case 1:
         if (formData.type_projet === '6') {
@@ -283,6 +287,7 @@ function App() {
   };
 
   const progressPercentage = ((step + 1) / 13) * 100;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
 
   const stepMeta = [
     { title: "VOS COORDONNÉES", desc: "Commençons par vous connaître pour faciliter nos échanges.", icon: User },
@@ -378,143 +383,139 @@ function App() {
               
               {/* --- STEP 01 : VOS COORDONNÉES --- */}
               {step === 0 && (
-                <div className="space-y-6 flex-grow">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Nom complet */}
+                <div className="space-y-5 flex-grow">
+                  {/* Nom + Entreprise */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
                         Nom complet <span className="text-bsk-blue-light font-black">*</span>
                       </label>
                       <input
                         type="text"
-                        required
                         value={formData.nom_complet}
                         onChange={e => setFormData(prev => ({ ...prev, nom_complet: e.target.value }))}
-                        placeholder="Votre nom"
-                        className={`w-full bg-slate-50 border rounded-2xl py-3.5 px-5 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 ${
-                          showValidationErrors && !formData.nom_complet.trim() ? 'border-red-500 bg-red-50/30' : 'border-slate-200'
-                        }`}
+                        placeholder="Votre nom et prénom"
+                        className={`w-full bg-slate-50 border rounded-2xl py-3 px-4 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 text-sm ${showValidationErrors && !formData.nom_complet.trim() ? 'border-red-400 bg-red-50/30' : 'border-slate-200'}`}
                       />
                       {showValidationErrors && !formData.nom_complet.trim() && (
-                        <p className="text-red-500 text-xs mt-1.5 font-medium">Le nom complet est obligatoire.</p>
+                        <p className="text-red-500 text-xs mt-1 font-medium">Le nom complet est obligatoire.</p>
                       )}
                     </div>
-
-                    {/* Entreprise */}
                     <div>
                       <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
-                        Nom de l'entreprise
+                        Entreprise / Marque
                       </label>
                       <input
                         type="text"
                         value={formData.entreprise}
                         onChange={e => setFormData(prev => ({ ...prev, entreprise: e.target.value }))}
-                        placeholder="Votre société (optionnel)"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300"
+                        placeholder="Nom de votre société (optionnel)"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 text-sm"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Téléphone WhatsApp */}
-                    <div>
-                      <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
-                        Téléphone (WhatsApp) <span className="text-bsk-blue-light font-black">*</span>
-                      </label>
-                      <div className="flex gap-2">
-                        <select
-                          value={formData.indicatif}
-                          onChange={e => setFormData(prev => ({ ...prev, indicatif: e.target.value }))}
-                          className="bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-3 text-bsk-text text-sm focus:outline-none focus:border-bsk-blue cursor-pointer"
-                        >
-                          {COUNTRY_CODES.map(c => (
-                            <option key={c.code} value={c.code} className="bg-white text-bsk-text">
-                              {c.label}
-                            </option>
-                          ))}
-                        </select>
+                  {/* Email */}
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
+                      Adresse e-mail <span className="text-bsk-blue-light font-black">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="votre@email.com"
+                      className={`w-full bg-slate-50 border rounded-2xl py-3 px-4 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 text-sm ${showValidationErrors && !emailValid ? 'border-red-400 bg-red-50/30' : 'border-slate-200'}`}
+                    />
+                    {showValidationErrors && !emailValid && (
+                      <p className="text-red-500 text-xs mt-1 font-medium">Veuillez saisir une adresse e-mail valide.</p>
+                    )}
+                  </div>
+
+                  {/* Téléphone WhatsApp */}
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
+                      Numéro WhatsApp <span className="text-bsk-blue-light font-black">*</span>
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <select
+                        value={formData.indicatif}
+                        onChange={e => setFormData(prev => ({ ...prev, indicatif: e.target.value, indicatif_custom: '' }))}
+                        className="bg-slate-50 border border-slate-200 rounded-2xl py-3 px-3 text-bsk-text text-sm focus:outline-none focus:border-bsk-blue cursor-pointer sm:w-auto w-full"
+                      >
+                        {COUNTRY_CODES.map(c => (
+                          <option key={c.code} value={c.code} className="bg-white text-bsk-text">{c.label}</option>
+                        ))}
+                      </select>
+                      {formData.indicatif === 'autre' && (
                         <input
-                          type="tel"
-                          required
-                          value={formData.telephone_number}
-                          onChange={e => setFormData(prev => ({ ...prev, telephone_number: e.target.value.replace(/[^0-9\s]/g, '') }))}
-                          placeholder="77 123 45 67"
-                          className={`flex-grow bg-slate-50 border rounded-2xl py-3.5 px-5 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 ${
-                            showValidationErrors && formData.telephone_number.trim().length < 7 ? 'border-red-500 bg-red-50/30' : 'border-slate-200'
-                          }`}
+                          type="text"
+                          value={formData.indicatif_custom}
+                          onChange={e => setFormData(prev => ({ ...prev, indicatif_custom: e.target.value.replace(/[^0-9+]/g, '') }))}
+                          placeholder="+XXX"
+                          className={`bg-slate-50 border rounded-2xl py-3 px-4 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue transition-all duration-300 text-sm w-full sm:w-24 ${showValidationErrors && !formData.indicatif_custom.trim() ? 'border-red-400' : 'border-slate-200'}`}
                         />
-                      </div>
-                      {showValidationErrors && formData.telephone_number.trim().length < 7 && (
-                        <p className="text-red-500 text-xs mt-1.5 font-medium">Veuillez renseigner un numéro valide.</p>
                       )}
-                    </div>
-
-                    {/* WhatsApp Username */}
-                    <div>
-                      <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
-                        Identifiant WhatsApp (Handle / Pseudo)
-                      </label>
                       <input
-                        type="text"
-                        value={formData.identifiant_whatsapp}
-                        onChange={e => setFormData(prev => ({ ...prev, identifiant_whatsapp: e.target.value }))}
-                        placeholder="@votre_pseudo (optionnel)"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300"
+                        type="tel"
+                        value={formData.telephone_number}
+                        onChange={e => setFormData(prev => ({ ...prev, telephone_number: e.target.value.replace(/[^0-9\s]/g, '') }))}
+                        placeholder="77 123 45 67"
+                        className={`flex-1 bg-slate-50 border rounded-2xl py-3 px-4 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 text-sm ${showValidationErrors && formData.telephone_number.trim().length < 7 ? 'border-red-400 bg-red-50/30' : 'border-slate-200'}`}
                       />
                     </div>
+                    {showValidationErrors && formData.telephone_number.trim().length < 7 && (
+                      <p className="text-red-500 text-xs mt-1 font-medium">Veuillez renseigner un numéro valide.</p>
+                    )}
+                    {showValidationErrors && formData.indicatif === 'autre' && !formData.indicatif_custom.trim() && (
+                      <p className="text-red-500 text-xs mt-1 font-medium">Veuillez saisir votre indicatif téléphonique.</p>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Pays de résidence */}
-                    <div className="relative" ref={countryDropdownRef}>
-                      <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
-                        Pays de résidence <span className="text-bsk-blue-light font-black">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.pays}
-                        onFocus={() => setShowCountryDropdown(true)}
-                        onChange={e => {
-                          setFormData(prev => ({ ...prev, pays: e.target.value }));
-                          setCountrySearch(e.target.value);
-                          setShowCountryDropdown(true);
-                        }}
-                        placeholder="Votre pays"
-                        className={`w-full bg-slate-50 border rounded-2xl py-3.5 px-5 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 ${
-                          showValidationErrors && !formData.pays.trim() ? 'border-red-500 bg-red-50/30' : 'border-slate-200'
-                        }`}
-                      />
-                      {showValidationErrors && !formData.pays.trim() && (
-                        <p className="text-red-500 text-xs mt-1.5 font-medium">Le pays est obligatoire.</p>
-                      )}
-
-                      {/* Autocomplete Dropdown - light mode glass */}
-                      {showCountryDropdown && (
-                        <div className="absolute left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl max-h-48 overflow-y-auto z-20 shadow-2xl">
-                          {countriesList
-                            .filter(c => c.toLowerCase().includes(formData.pays.toLowerCase()))
-                            .map((country, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => {
-                                  setFormData(prev => ({ ...prev, pays: country }));
-                                  setShowCountryDropdown(false);
-                                }}
-                                className="w-full text-left px-5 py-3 text-sm text-bsk-text hover:bg-slate-50 hover:text-bsk-blue border-b border-slate-100 last:border-b-0 transition-colors cursor-pointer"
-                              >
-                                {country}
-                              </button>
-                            ))}
-                          {countriesList.filter(c => c.toLowerCase().includes(formData.pays.toLowerCase())).length === 0 && (
-                            <div className="px-5 py-3 text-sm text-bsk-muted font-light">
-                              Aucun pays correspondant. Saisie libre autorisée.
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                  {/* Pays de résidence */}
+                  <div className="relative" ref={countryDropdownRef}>
+                    <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
+                      Pays de résidence <span className="text-bsk-blue-light font-black">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.pays}
+                      onFocus={() => setShowCountryDropdown(true)}
+                      onChange={e => {
+                        setFormData(prev => ({ ...prev, pays: e.target.value }));
+                        setShowCountryDropdown(true);
+                      }}
+                      placeholder="Tapez ou sélectionnez votre pays..."
+                      className={`w-full bg-slate-50 border rounded-2xl py-3 px-4 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 text-sm ${showValidationErrors && !formData.pays.trim() ? 'border-red-400 bg-red-50/30' : 'border-slate-200'}`}
+                    />
+                    {showValidationErrors && !formData.pays.trim() && (
+                      <p className="text-red-500 text-xs mt-1 font-medium">Le pays est obligatoire.</p>
+                    )}
+                    {showCountryDropdown && (
+                      <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl max-h-44 overflow-y-auto z-20 shadow-2xl">
+                        {countriesList
+                          .filter(c => c.toLowerCase().includes(formData.pays.toLowerCase()))
+                          .slice(0, 20)
+                          .map((country, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, pays: country }));
+                                setShowCountryDropdown(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm text-bsk-text hover:bg-slate-50 hover:text-bsk-blue border-b border-slate-100 last:border-b-0 transition-colors cursor-pointer"
+                            >
+                              {country}
+                            </button>
+                          ))}
+                        {countriesList.filter(c => c.toLowerCase().includes(formData.pays.toLowerCase())).length === 0 && (
+                          <div className="px-4 py-3 text-sm text-bsk-muted">
+                            Aucun résultat — votre saisie <strong>&quot;{formData.pays}&quot;</strong> sera utilisée directement.
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1376,8 +1377,8 @@ function App() {
                         <div className="text-sm space-y-2 text-bsk-text font-light">
                           <p><strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Nom :</strong> {formData.nom_complet}</p>
                           {formData.entreprise && <p><strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Entreprise :</strong> {formData.entreprise}</p>}
-                          <p><strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Tél :</strong> {formData.indicatif} {formData.telephone_number}</p>
-                          {formData.identifiant_whatsapp && <p><strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">WhatsApp :</strong> {formData.identifiant_whatsapp}</p>}
+                          <p><strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Email :</strong> {formData.email}</p>
+                          <p><strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">WhatsApp :</strong> {formData.indicatif === 'autre' ? formData.indicatif_custom : formData.indicatif} {formData.telephone_number}</p>
                           <p><strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Pays :</strong> {formData.pays}</p>
                         </div>
                       </div>

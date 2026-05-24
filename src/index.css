@@ -63,3 +63,10 @@
   border: none !important;
   min-height: auto !important;
 }
+
+/* Éviter les coupures de cartes lors de la génération PDF */
+.pdf-card {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+

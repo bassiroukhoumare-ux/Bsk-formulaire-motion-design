@@ -42,7 +42,7 @@ export const buildWhatsAppMessage = (formData, usdRate = 1.08) => {
     if (voice === 'humaine') {
       const provider = formData.fournisseur_voix_humaine === 'client' 
         ? 'fournie par le client' 
-        : 'produite par BSK Dezigner';
+        : `produite par BSK Dezigner${formData.genre_voix ? ` - ${formData.genre_voix === 'feminin' ? 'Féminine' : 'Masculine'}` : ''}`;
       return `Voix humaine naturelle (${provider})`;
     }
     if (voice === 'ia') {
@@ -88,7 +88,8 @@ export const buildWhatsAppMessage = (formData, usdRate = 1.08) => {
     const formatsMap = {
       'horizontal': '16:9 Horizontal',
       'vertical': '9:16 Vertical',
-      'carre': '1:1 Carré'
+      'carre': '1:1 Carré',
+      'personnalise': formData.format_personnalise ? `Personnalisé (${formData.format_personnalise})` : 'Format personnalisé'
     };
     return (fmts || []).map(f => formatsMap[f]).filter(Boolean).join(', ');
   };
@@ -114,7 +115,8 @@ export const buildWhatsAppMessage = (formData, usdRate = 1.08) => {
   const getDocumentsNames = (docs) => {
     const docsMap = {
       'cahier_des_charges': 'Cahier des charges détaillé',
-      'charte_graphique': 'Charte graphique stricte'
+      'charte_graphique': 'Charte graphique stricte',
+      'fichiers_fournis': 'Médias fournis à intégrer'
     };
     return (docs || []).map(d => docsMap[d]).filter(Boolean).join(', ');
   };
@@ -122,7 +124,6 @@ export const buildWhatsAppMessage = (formData, usdRate = 1.08) => {
   // Convert budget brackets for WhatsApp representation
   const getBudgetText = () => {
     const fcfaRanges = {
-      't1': { min: 50000, max: 100000, label: '50 000 – 100 000' },
       't2': { min: 100000, max: 200000, label: '100 000 – 200 000' },
       't3': { min: 200000, max: 300000, label: '200 000 – 300 000' },
       't4': { min: 300000, max: 400000, label: '300 000 – 400 000' },

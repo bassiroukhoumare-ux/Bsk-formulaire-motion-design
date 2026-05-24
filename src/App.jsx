@@ -26,12 +26,14 @@ const INITIAL_STATE = {
   duree: '',
   duree_personnalise: '',
   type_voix: '',
+  genre_voix: '',
   fournisseur_voix_humaine: '',
   fournisseur_voix_ia: '',
   gestion_script: '',
   styles_visuels: [],
   niveau_complexite: '',
   formats: [],
+  format_personnalise: '',
   lien_reference: '',
   ce_qui_plait: '',
   documents: [],
@@ -66,7 +68,6 @@ const COUNTRY_CODES = [
 ];
 
 const BUDGET_BRACKETS = [
-  { id: 't1', min: 50000, max: 100000, label: '50 000 – 100 000' },
   { id: 't2', min: 100000, max: 200000, label: '100 000 – 200 000' },
   { id: 't3', min: 200000, max: 300000, label: '200 000 – 300 000' },
   { id: 't4', min: 300000, max: 400000, label: '300 000 – 400 000' },
@@ -188,6 +189,7 @@ function App() {
       case 4:
         if (formData.type_voix === 'humaine') {
           if (!formData.fournisseur_voix_humaine) return false;
+          if (formData.fournisseur_voix_humaine === 'bsk' && !formData.genre_voix) return false;
         } else if (formData.type_voix === 'ia') {
           if (!formData.fournisseur_voix_ia) return false;
         }
@@ -197,6 +199,9 @@ function App() {
       case 6:
         return formData.niveau_complexite !== '';
       case 7:
+        if (formData.formats.includes('personnalise')) {
+          if (!formData.format_personnalise || !formData.format_personnalise.trim()) return false;
+        }
         return formData.formats.length > 0;
       case 8:
         return true;
@@ -610,11 +615,11 @@ function App() {
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {[
-                        { id: 'notoriete', label: 'Notoriété de marque' },
-                        { id: 'conversion', label: 'Conversion & Ventes' },
-                        { id: 'explication', label: 'Explication de service' },
-                        { id: 'promo', label: 'Promotion Évènementielle' },
-                        { id: 'croissance', label: 'Croissance Réseaux' }
+                        { id: 'notoriete', label: 'Notoriété de marque', desc: 'Faire connaître votre entreprise, marquer les esprits et renforcer votre identité visuelle.' },
+                        { id: 'conversion', label: 'Conversion & Ventes', desc: 'Inciter à l\'action, générer des leads et booster vos ventes de produits ou services.' },
+                        { id: 'explication', label: 'Explication de service', desc: 'Simplifier un concept complexe ou présenter le fonctionnement de votre produit/application.' },
+                        { id: 'promo', label: 'Promotion Évènementielle', desc: 'Créer de l\'engouement autour d\'un lancement, d\'un webinaire ou d\'un événement physique.' },
+                        { id: 'croissance', label: 'Croissance Réseaux', desc: 'Capter l\'attention sur TikTok, Reels ou YouTube pour développer votre communauté.' }
                       ].map(obj => {
                         const isSelected = formData.objectif === obj.id;
                         return (
@@ -622,18 +627,21 @@ function App() {
                             key={obj.id}
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, oex: obj.id, objectif: obj.id }))}
-                            className={`flex items-center gap-3.5 p-4 border rounded-xl text-left transition-all duration-300 hover:scale-[1.02] cursor-pointer outline-none ${
+                            className={`flex items-start gap-3.5 p-4 border rounded-xl text-left transition-all duration-300 hover:scale-[1.02] cursor-pointer outline-none ${
                               isSelected
-                                ? 'border-bsk-blue bg-blue-50/50 text-bsk-blue font-bold shadow-sm'
-                                : 'border-slate-200 bg-white text-bsk-muted'
+                                ? 'border-bsk-blue bg-blue-50/50 shadow-sm'
+                                : 'border-slate-200 bg-white'
                             }`}
                           >
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 ${
                               isSelected ? 'border-bsk-blue bg-bsk-blue' : 'border-slate-300'
                             }`}>
                               {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                             </div>
-                            <span className="text-sm font-sans font-medium">{obj.label}</span>
+                            <div>
+                              <span className={`text-sm font-sans font-semibold block ${isSelected ? 'text-bsk-blue' : 'text-bsk-text'}`}>{obj.label}</span>
+                              <span className="text-xs text-bsk-muted mt-1 font-light leading-normal block">{obj.desc}</span>
+                            </div>
                           </button>
                         );
                       })}
@@ -716,9 +724,9 @@ function App() {
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[
-                        { id: 'humaine', title: 'Voix humaine naturelle', desc: 'Voix off professionnelle enregistrée en studio' },
-                        { id: 'ia', title: 'Voix générée par IA', desc: 'Option économique et rapide' },
-                        { id: 'aucune', title: 'Pas de voix off', desc: 'Musique & Textes seuls' }
+                        { id: 'humaine', title: 'Voix humaine naturelle', desc: 'À partir de 40 000 FCFA (pour max. 30s). Produit par un professionnel en studio.' },
+                        { id: 'ia', title: 'Voix générée par IA', desc: 'À partir de 15 000 FCFA (pour max. 45s). Rapide et économique.' },
+                        { id: 'aucune', title: 'Pas de voix off', desc: 'Inclus. Musique et textes dynamiques uniquement.' }
                       ].map(voice => {
                         const isSelected = formData.type_voix === voice.id;
                         return (
@@ -776,6 +784,47 @@ function App() {
                       </div>
                       {showValidationErrors && !formData.fournisseur_voix_humaine && (
                         <p className="text-red-500 text-xs mt-2 font-medium">Veuillez préciser le fournisseur de la voix off.</p>
+                      )}
+
+                      {/* Choix du genre si produit par BSK */}
+                      {formData.fournisseur_voix_humaine === 'bsk' && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-5 pt-5 border-t border-slate-200"
+                        >
+                          <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-3 font-bold font-title">
+                            Genre de voix off humaine souhaité <span className="text-bsk-blue-light font-black">*</span>
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {[
+                              { id: 'feminin', label: '👩‍💼 Voix off féminine' },
+                              { id: 'masculin', label: '👨‍💼 Voix off masculine' }
+                            ].map(genre => {
+                              const isSel = formData.genre_voix === genre.id;
+                              return (
+                                <button
+                                  key={genre.id}
+                                  type="button"
+                                  onClick={() => setFormData(prev => ({ ...prev, genre_voix: genre.id }))}
+                                  className={`flex items-center gap-3.5 p-4 border rounded-xl text-left transition-all duration-300 outline-none cursor-pointer ${
+                                    isSel ? 'border-bsk-blue bg-white text-bsk-blue font-bold shadow-sm ring-1 ring-bsk-blue' : 'border-slate-200 bg-white text-bsk-text'
+                                  }`}
+                                >
+                                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                                    isSel ? 'border-bsk-blue bg-bsk-blue' : 'border-slate-300'
+                                  }`}>
+                                    {isSel && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                  </div>
+                                  <span className="text-sm font-sans font-medium">{genre.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {showValidationErrors && !formData.genre_voix && (
+                            <p className="text-red-500 text-xs mt-2 font-medium">Veuillez préciser le genre de la voix off.</p>
+                          )}
+                        </motion.div>
                       )}
                     </motion.div>
                   )}
@@ -848,6 +897,16 @@ function App() {
                     {showValidationErrors && !formData.gestion_script && (
                       <p className="text-red-500 text-xs mt-1.5">Le choix de la gestion du script est obligatoire.</p>
                     )}
+                  </div>
+
+                  {/* Note sur la variabilité des prix de la voix off */}
+                  <div className="bg-slate-50 border border-bsk-gold rounded-[1.5rem] p-5 mt-6 flex items-start gap-4">
+                    <div className="text-bsk-gold-dark mt-1 flex-shrink-0">
+                      <HelpCircle size={20} />
+                    </div>
+                    <p className="text-xs sm:text-sm text-bsk-muted leading-relaxed font-light">
+                      <strong className="text-bsk-text font-bold">Note sur les tarifs :</strong> Les prix indiqués sont des estimations de base. Le tarif peut varier en fonction de vos besoins spécifiques, de la longueur finale du script et de la voix sélectionnée.
+                    </p>
                   </div>
                 </div>
               )}
@@ -958,11 +1017,12 @@ function App() {
               {/* --- STEP 08 : FORMAT & DIFFUSION --- */}
               {step === 7 && (
                 <div className="space-y-6 flex-grow">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     {[
                       { id: 'horizontal', title: '16:9 Horizontal', desc: 'YouTube, Web, TV' },
                       { id: 'vertical', title: '9:16 Vertical', desc: 'TikTok, Reels, Shorts' },
-                      { id: 'carre', title: '1:1 Carré', desc: 'Feed Instagram/FB' }
+                      { id: 'carre', title: '1:1 Carré', desc: 'Feed Instagram/FB' },
+                      { id: 'personnalise', title: 'Format personnalisé...', desc: 'Saisissez le format spécifique dont vous avez besoin' }
                     ].map(fmt => {
                       const isSelected = formData.formats.includes(fmt.id);
                       return (
@@ -984,11 +1044,36 @@ function App() {
                               {isSelected && <Check size={14} />}
                             </div>
                           </div>
-                          <span className="text-xs text-bsk-muted mt-auto font-light">{fmt.desc}</span>
+                          <span className="text-xs text-bsk-muted mt-auto font-light leading-normal">{fmt.desc}</span>
                         </button>
                       );
                     })}
                   </div>
+
+                  {formData.formats.includes('personnalise') && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-4 max-w-md mx-auto"
+                    >
+                      <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-2 font-bold font-title">
+                        Précisez le format personnalisé <span className="text-bsk-blue-light font-black">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.format_personnalise || ''}
+                        onChange={e => setFormData(prev => ({ ...prev, format_personnalise: e.target.value }))}
+                        placeholder="Ex : 21:9 Cinémascope, 4:5 Portrait..."
+                        className={`w-full bg-slate-50 border rounded-2xl py-3.5 px-5 text-bsk-text placeholder-slate-400 focus:outline-none focus:bg-white focus:border-bsk-blue focus:ring-2 focus:ring-bsk-blue/10 transition-all duration-300 ${
+                          showValidationErrors && (!formData.format_personnalise || !formData.format_personnalise.trim()) ? 'border-red-500 bg-red-50/30' : 'border-slate-200'
+                        }`}
+                      />
+                      {showValidationErrors && (!formData.format_personnalise || !formData.format_personnalise.trim()) && (
+                        <p className="text-red-500 text-xs mt-1.5 font-medium">Veuillez renseigner votre format spécifique.</p>
+                      )}
+                    </motion.div>
+                  )}
 
                   <div className="bg-slate-50 border border-bsk-gold rounded-[1.5rem] p-5 mt-6 flex items-start gap-4">
                     <div className="text-bsk-gold-dark mt-1 flex-shrink-0">
@@ -1038,12 +1123,13 @@ function App() {
 
                   <div>
                     <label className="block text-xs uppercase tracking-widest text-bsk-muted mb-3 font-bold font-title">
-                      Documents disponibles
+                      Documents & Médias disponibles
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
                         { id: 'cahier_des_charges', title: "J'ai un cahier des charges détaillé à transmettre" },
-                        { id: 'charte_graphique', title: "J'ai une charte graphique stricte à respecter" }
+                        { id: 'charte_graphique', title: "J'ai une charte graphique stricte à respecter" },
+                        { id: 'fichiers_fournis', title: "J'ai des fichiers médias (images, vidéos, logos) à intégrer" }
                       ].map(doc => {
                         const isSelected = formData.documents.includes(doc.id);
                         return (
@@ -1362,9 +1448,10 @@ function App() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
                       
                       {/* Section 1: Client */}
-                      <div className="p-5 bg-white border border-slate-200 rounded-2xl relative group">
+                      <div className="pdf-card p-5 bg-white border border-slate-200 rounded-2xl relative group">
                         <button
                           type="button"
+                          data-html2canvas-ignore
                           onClick={() => setStep(0)}
                           className="absolute top-4 right-4 text-bsk-blue hover:text-bsk-blue-light p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Modifier les coordonnées"
@@ -1384,9 +1471,10 @@ function App() {
                       </div>
 
                       {/* Section 2: Projet */}
-                      <div className="p-5 bg-white border border-slate-200 rounded-2xl relative group">
+                      <div className="pdf-card p-5 bg-white border border-slate-200 rounded-2xl relative group">
                         <button
                           type="button"
+                          data-html2canvas-ignore
                           onClick={() => setStep(1)}
                           className="absolute top-4 right-4 text-bsk-blue hover:text-bsk-blue-light p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Modifier le type de projet"
@@ -1421,9 +1509,10 @@ function App() {
                       </div>
 
                       {/* Section 3: Technique */}
-                      <div className="p-5 bg-white border border-slate-200 rounded-2xl relative group">
+                      <div className="pdf-card p-5 bg-white border border-slate-200 rounded-2xl relative group">
                         <button
                           type="button"
+                          data-html2canvas-ignore
                           onClick={() => setStep(3)}
                           className="absolute top-4 right-4 text-bsk-blue hover:text-bsk-blue-light p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Modifier la technique"
@@ -1444,7 +1533,13 @@ function App() {
                           </p>
                           <p>
                             <strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Voix :</strong>{' '}
-                            {formData.type_voix === 'humaine' && `Voix humaine (${formData.fournisseur_voix_humaine === 'client' ? 'fournie par vous' : 'produite par BSK'})`}
+                            {formData.type_voix === 'humaine' && (
+                              `Voix humaine naturelle (${
+                                formData.fournisseur_voix_humaine === 'client' 
+                                  ? 'fournie par vous' 
+                                  : `produite par BSK${formData.genre_voix ? ` - ${formData.genre_voix === 'feminin' ? 'Féminine' : 'Masculine'}` : ''}`
+                              })`
+                            )}
                             {formData.type_voix === 'ia' && `Voix IA (${formData.fournisseur_voix_ia === 'client' ? 'fournie par vous' : 'produite par BSK'})`}
                             {formData.type_voix === 'aucune' && 'Pas de voix off'}
                           </p>
@@ -1475,6 +1570,7 @@ function App() {
                               if (f === 'horizontal') return '16:9';
                               if (f === 'vertical') return '9:16';
                               if (f === 'carre') return '1:1';
+                              if (f === 'personnalise') return `Personnalisé (${formData.format_personnalise || ''})`;
                               return f;
                             }).join(', ')}
                           </p>
@@ -1482,9 +1578,10 @@ function App() {
                       </div>
 
                       {/* Section 4: Références */}
-                      <div className="p-5 bg-white border border-slate-200 rounded-2xl relative group">
+                      <div className="pdf-card p-5 bg-white border border-slate-200 rounded-2xl relative group">
                         <button
                           type="button"
+                          data-html2canvas-ignore
                           onClick={() => setStep(8)}
                           className="absolute top-4 right-4 text-bsk-blue hover:text-bsk-blue-light p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Modifier les références"
@@ -1507,10 +1604,11 @@ function App() {
                             <p><strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Aimé :</strong> {formData.ce_qui_plait}</p>
                           )}
                           <p>
-                            <strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Documents :</strong>{' '}
+                            <strong className="text-bsk-muted text-xs uppercase tracking-wider font-semibold font-title">Documents & Médias :</strong>{' '}
                             {formData.documents.map(d => {
                               if (d === 'cahier_des_charges') return 'Cahier des charges';
                               if (d === 'charte_graphique') return 'Charte graphique';
+                              if (d === 'fichiers_fournis') return 'Fichiers médias fournis';
                               return d;
                             }).join(', ') || 'Aucun'}
                           </p>
@@ -1518,9 +1616,10 @@ function App() {
                       </div>
 
                       {/* Section 5: Budget */}
-                      <div className="p-5 bg-white border border-slate-200 rounded-2xl relative group">
+                      <div className="pdf-card p-5 bg-white border border-slate-200 rounded-2xl relative group">
                         <button
                           type="button"
+                          data-html2canvas-ignore
                           onClick={() => setStep(9)}
                           className="absolute top-4 right-4 text-bsk-blue hover:text-bsk-blue-light p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Modifier le budget"
@@ -1551,9 +1650,10 @@ function App() {
                       </div>
 
                       {/* Section 6: Légal & Livraison */}
-                      <div className="p-5 bg-white border border-slate-200 rounded-2xl relative group">
+                      <div className="pdf-card p-5 bg-white border border-slate-200 rounded-2xl relative group">
                         <button
                           type="button"
+                          data-html2canvas-ignore
                           onClick={() => setStep(10)}
                           className="absolute top-4 right-4 text-bsk-blue hover:text-bsk-blue-light p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Modifier le légal"
@@ -1583,9 +1683,10 @@ function App() {
 
                     {/* Section 7: Questions */}
                     {formData.liste_questions.length > 0 && (
-                      <div className="p-5 bg-white border border-slate-200 rounded-2xl mt-6 relative group text-left">
+                      <div className="pdf-card p-5 bg-white border border-slate-200 rounded-2xl mt-6 relative group text-left">
                         <button
                           type="button"
+                          data-html2canvas-ignore
                           onClick={() => setStep(11)}
                           className="absolute top-4 right-4 text-bsk-blue hover:text-bsk-blue-light p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Modifier les questions"
